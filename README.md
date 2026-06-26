@@ -1,2 +1,2 @@
 # riscv64OS
-My attempt at creating a pure, very small riscv64 operating system. 
+My attempt at creating a pure, very small riscv64 operating system for the QEMU virt board. 
