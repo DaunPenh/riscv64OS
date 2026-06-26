@@ -1,2 +1,2 @@
 # riscv64OS
-My attempt at creating a pure, very small riscv64 operating system for the QEMU virt board. 
+A small bare-metal RISC-V 64-bit kernel for the QEMU virt board, written in assembly.
