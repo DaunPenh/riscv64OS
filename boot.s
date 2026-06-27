@@ -8,8 +8,7 @@ _start:
 	la t6, trap_handler
 	csrw mtvec, t6
 
-	#intentional error
-	.word 0x00000000
+	ecall
 
 call_loop:
 	call uart_getc

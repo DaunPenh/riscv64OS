@@ -36,10 +36,34 @@ trap_handler:
     sd t6, 216(sp)
 	
     csrr t6, mcause
-    la a0, msg
+
+	li t1, 2
+	beq t6, t1, handle_illegal
+
+	li t1, 11
+	beq t6, t1, handle_ecall
+
+	j handle_unknown
+
+
+handle_unknown:
+	la a0, msg
     call uart_puts
-    call system_hang
+    j system_hang
+
+handle_illegal: 
+	la a0, illegal
+	call uart_puts
+	j system_hang
+
+handle_ecall:
+	la a0, ecall_msg
+	call uart_puts
+	csrr t1, mepc
+	addi t1, t1, 4
+	csrw mepc, t1
 	
+reload_stack:	
     ld ra, 0(sp)
     ld t0, 8(sp)
     ld t1, 16(sp)
@@ -72,6 +96,16 @@ trap_handler:
     addi sp, sp, FRAME_SIZE
     mret
 
+
+   
+
 .section .data
 msg:
 	.asciz "Something Happened.\n"
+
+illegal: 
+	.asciz "Illegal Command.\n"
+
+ecall_msg:
+	.asciz "Environment Call.\n"
+
