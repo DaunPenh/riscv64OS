@@ -5,7 +5,7 @@ CFLAGS = -nostdlib -static -no-pie -T link.ld
 all: run
 
 kernel.elf: boot.s
-	$(CC) $(CFLAGS) -o kernel.elf boot.s
+	$(CC) $(CFLAGS) -o kernel.elf boot.s trap.s uart.s
 
 run: kernel.elf
 	$(QEMU) -machine virt -nographic -bios none -kernel kernel.elf
