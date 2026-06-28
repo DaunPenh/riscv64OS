@@ -43,6 +43,9 @@ trap_handler:
 	li t1, 11
 	beq t6, t1, handle_ecall
 
+	li t1, 0x8000000000000007
+	beq t6, t1, handle_timer
+
 	j handle_unknown
 
 
@@ -56,12 +59,19 @@ handle_illegal:
 	call uart_puts
 	j system_hang
 
+handle_timer:
+	la a0, timer
+	call uart_puts
+	call clint_init
+	j reload_stack
+
 handle_ecall:
 	la a0, ecall_msg
 	call uart_puts
 	csrr t1, mepc
 	addi t1, t1, 4
 	csrw mepc, t1
+	j reload_stack
 	
 reload_stack:	
     ld ra, 0(sp)
@@ -108,4 +118,6 @@ illegal:
 
 ecall_msg:
 	.asciz "Environment Call.\n"
+timer:
+	.asciz "Timer Interrupt.\n"
 

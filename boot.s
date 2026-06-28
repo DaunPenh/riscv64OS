@@ -8,7 +8,8 @@ _start:
 	la t6, trap_handler
 	csrw mtvec, t6
 
-	ecall
+	call clint_init
+	call clint_enable
 
 call_loop:
 	call uart_getc
