@@ -75,12 +75,16 @@ trap_handler:
     sd t0, TCB_MSTATUS(t6)
     la sp, _stack_top
     csrr t0, mcause
+    
     li t1, 2
     beq t0, t1, handle_illegal
+    
     li t1, 11
     beq t0, t1, handle_ecall
+    
     li t1, 0x8000000000000007
     beq t0, t1, handle_timer
+    
     j handle_unknown
 
 handle_timer:
@@ -88,8 +92,9 @@ handle_timer:
     call uart_puts
     call clint_init
     call sched_next
+    j context_restore
 
-restore_stack:
+context_restore:
     mv t6, a0
     ld t0, TCB_MEPC(t6)
     csrw mepc, t0
@@ -135,7 +140,7 @@ handle_ecall:
     ld t0, TCB_MEPC(a0)
     addi t0, t0, 4
     sd t0, TCB_MEPC(a0)
-    j restore_stack
+    j context_restore
 
 handle_illegal:
     la a0, illegal_msg
