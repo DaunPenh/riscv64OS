@@ -31,9 +31,15 @@
 .equ TCB_T6, 240
 .equ TCB_MEPC, 248
 .equ TCB_MSTATUS, 256
+.equ TCB_DEAD, 264
+.equ SYS_YIELD, 0
+.equ SYS_EXIT, 1
+.equ SYS_GETPID, 2
 
 .section .text
+
 .global trap_handler
+
 .balign 4
 trap_handler:
     csrrw t6, mscratch, t6
@@ -81,15 +87,14 @@ trap_handler:
     
     li t1, 11
     beq t0, t1, handle_ecall
-    
+
+check_timer:
+    csrr t0, mcause
     li t1, 0x8000000000000007
     beq t0, t1, handle_timer
-    
     j handle_unknown
 
 handle_timer:
-    la a0, timer_msg
-    call uart_puts
     call clint_init
     call sched_next
     j context_restore
@@ -134,12 +139,43 @@ context_restore:
     mret
 
 handle_ecall:
-    la a0, ecall_msg
-    call uart_puts
-    csrr a0, mscratch
+    li t1, SYS_YIELD
+    li t2, SYS_EXIT
+    li t3, SYS_GETPID
+    mv a0, t6
+    ld t4, TCB_A7(a0)
+    beq t4, t1, yield
+    beq t4, t2, exit
+    beq t4, t3, getpid
+    j handle_illegal
+
+yield:
+    mv t5, t6
+    ld t0, TCB_MEPC(t5)
+    addi t0, t0, 4
+    sd t0, TCB_MEPC(t5)
+    call sched_next
+    j context_restore
+
+exit:
+    mv t5, t6
+    ld t0, TCB_MEPC(t5)
+    addi t0, t0, 4
+    sd t0, TCB_MEPC(t5)
+    li t1, 1
+    sd t1, TCB_DEAD(t5)
+    call sched_next
+    j context_restore
+
+getpid:
+    mv a0, t6
+    la t0, current_task
+    ld t1, 0(t0)
+    sd t1, TCB_A0(a0)
     ld t0, TCB_MEPC(a0)
     addi t0, t0, 4
     sd t0, TCB_MEPC(a0)
+    csrw mscratch, a0
     j context_restore
 
 handle_illegal:
@@ -163,6 +199,7 @@ handle_unknown:
     j system_hang
 
 .section .rodata
+
 timer_msg:
     .asciz "\n[Timer Interrupt]\n"
 
@@ -176,4 +213,4 @@ mepc_msg:
     .asciz "mepc = 0x"
 
 unknown_msg:
-    .asciz "\n[Something Happened], mecp = 0x"
+    .asciz "\n[Something Happened], mcause = 0x"

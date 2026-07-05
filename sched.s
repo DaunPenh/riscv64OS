@@ -32,7 +32,8 @@
 .equ TCB_T6, 240
 .equ TCB_MEPC, 248
 .equ TCB_MSTATUS, 256
-.equ TCB_SIZE, 264
+.equ TCB_DEAD, 264
+.equ TCB_SIZE, 272
 .equ NUM_TASKS, 3
 
 .section .bss
@@ -84,14 +85,22 @@ sched_init:
 sched_next:
     la t0, current_task
     ld t1, 0(t0)
+
+increment:
     addi t1, t1, 1
     li t2, NUM_TASKS
     remu t1, t1, t2
+	la t2, tcb_table
+	slli t3, t1, 8
+	slli t4, t1, 4
+	add t3, t3, t4
+	add a0, t2, t3 
+
+load_tcb_dead:
+	ld t3, TCB_DEAD(a0)
+	bnez t3, increment
+
+commit:
     sd t1, 0(t0)
-    la t0, tcb_table
-    slli t2, t1, 8
-    slli t3, t1, 3
-    add t2, t2, t3
-    add a0, t0, t2
     csrw mscratch, a0
     ret

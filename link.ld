@@ -17,7 +17,6 @@ SECTIONS {
     }
     _bss_end = .;
 
-    /* Boot / trap scratch stack (32 KB above .bss) */
     . = . + 0x8000;
     _stack_top = .;
 }
